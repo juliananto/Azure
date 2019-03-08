@@ -1,7 +1,7 @@
 
 param(
     [string]
-    $subscriptionId = "c127e5d3-dd48-4adc-83c4-10dc80af6e05",
+    $subscriptionId = "c91ab2b2-524e-4b8c-9feb-2ad11e7d2aba",
 
     [string]
     $resourceGroupName = "GlobantChatbot",
