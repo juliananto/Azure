@@ -13,10 +13,10 @@ param(
     $deploymentName = "chatbot",
 
     [string]
-    $qnaServicesTemplate = "https://raw.githubusercontent.com/AashiqJ/Chatbot_Assignment/master/templates/qnamaker_template.json",
+    $qnaServicesTemplate = "https://raw.githubusercontent.com/juliananto/Chatbot_Assignment/master/templates/qnamaker_template.json",
 
     [string]
-    $chatBotTemplate = "https://raw.githubusercontent.com/AashiqJ/Chatbot_Assignment/master/templates/bot_template.json",
+    $chatBotTemplate = "https://raw.githubusercontent.com/juliananto/Chatbot_Assignment/master/templates/bot_template.json",
 
     [Parameter(Mandatory=$true)]
     [string]
