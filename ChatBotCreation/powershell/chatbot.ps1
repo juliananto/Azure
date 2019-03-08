@@ -10,13 +10,13 @@ param(
     $resourceGroupLocation = "westus",
 
     [string]
-    $deploymentName = "InfoChatBot",
+    $deploymentName = "chatbot",
 
     [string]
-    $qnaServicesTemplate = "https://github.com/juliananto/Azure/tree/master/ChatBotCreation/templates/qnamaker_template.json",
+    $qnaServicesTemplate = "https://raw.githubusercontent.com/AashiqJ/Chatbot_Assignment/master/templates/qnamaker_template.json",
 
     [string]
-    $chatBotTemplate = "https://github.com/juliananto/Azure/tree/master/ChatBotCreation/templates/bot_template.json",
+    $chatBotTemplate = "https://raw.githubusercontent.com/AashiqJ/Chatbot_Assignment/master/templates/bot_template.json",
 
     [Parameter(Mandatory=$true)]
     [string]
@@ -112,7 +112,7 @@ $headers = @{
     'Content-Type'              = 'application/json'
     'Ocp-Apim-Subscription-Key' = $key
 }
-$body = '{"name": "GlobantQnA","qnaList":[],"urls":[], "files": [{"fileName": "GlobantFAQ.docx","fileUri": "https://github.com/juliananto/Azure/blob/master/ChatBotCreation/GlobantFAQ.docx?raw=true"}]}'
+$body = '{"name": "GlobantQnA","qnaList":[],"urls":[], "files": [{"fileName": "GlobantFAQ.docx","fileUri": "https://github.com/AashiqJ/Chatbot_Assignment/blob/master/GlobantFAQ.docx?raw=true"}]}'
 $createKbResult = Invoke-RestMethod -Uri $uri -Method Post -Headers $headers -Body $body
 
 $createKbResult
