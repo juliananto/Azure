@@ -1,22 +1,22 @@
 
 param(
     [string]
-    $subscriptionId = "c91ab2b2-524e-4b8c-9feb-2ad11e7d2aba",
+    $subscriptionId = "c127e5d3-dd48-4adc-83c4-10dc80af6e05",
 
     [string]
     $resourceGroupName = "GlobantChatbot",
 
     [string]
-    $resourceGroupLocation = "westus",
+    $resourceGroupLocation = "eastus",
 
     [string]
-    $deploymentName = "chatbot",
+    $deploymentName = "InfoChatBot",
 
     [string]
-    $qnaServicesTemplate = "https://raw.githubusercontent.com/juliananto/Chatbot_Assignment/master/templates/qnamaker_template.json",
+    $qnaServicesTemplate = "https://github.com/juliananto/Azure/tree/master/ChatBotCreation/templates/templates/qnamaker_template.json",
 
     [string]
-    $chatBotTemplate = "https://raw.githubusercontent.com/juliananto/Chatbot_Assignment/master/templates/bot_template.json",
+    $chatBotTemplate = "https://github.com/juliananto/Azure/tree/master/ChatBotCreation/templates/bot_template.json",
 
     [Parameter(Mandatory=$true)]
     [string]
