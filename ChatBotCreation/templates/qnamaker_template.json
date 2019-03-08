@@ -3,38 +3,38 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
         "qna": {
-            "type": "String"
+            "type": "string"
         },
         "appName": {
-            "type": "String"
+            "type": "string"
         },
         "sku": {
             "defaultValue": "F0",
-            "type": "String"
+            "type": "string"
         },
         "location": {
             "defaultValue": "westus",
-            "type": "String"
+            "type": "string"
         },
         "location2": {
             "defaultValue": "eastus",
-            "type": "String"
+            "type": "string"
         },
         "location3": {
             "defaultValue": "centralus",
-            "type": "String"
+            "type": "string"
         },
         "location4": {
             "defaultValue": "centralus",
-            "type": "String"
+            "type": "string"
         },
         "sku2": {
             "defaultValue": "free",
-            "type": "String"
+            "type": "string"
         },
         "searchHostingMode": {
             "defaultValue": "Default",
-            "type": "String"
+            "type": "string"
         }
     },
     "variables": {
@@ -162,7 +162,7 @@
     ],
     "outputs": {
         "qnaRuntimeEndpoint": {
-            "type": "String",
+            "type": "string",
             "value": "[concat('https://',reference(resourceId('Microsoft.Web/sites', parameters('appName'))).hostNames[0])]"
         },
         "cognitivekeys": {

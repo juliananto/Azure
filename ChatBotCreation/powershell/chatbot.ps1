@@ -13,7 +13,7 @@ param(
     $deploymentName = "InfoChatBot",
 
     [string]
-    $qnaServicesTemplate = "https://github.com/juliananto/Azure/tree/master/ChatBotCreation/templates/templates/qnamaker_template.json",
+    $qnaServicesTemplate = "https://github.com/juliananto/Azure/tree/master/ChatBotCreation/templates/qnamaker_template.json",
 
     [string]
     $chatBotTemplate = "https://github.com/juliananto/Azure/tree/master/ChatBotCreation/templates/bot_template.json",
