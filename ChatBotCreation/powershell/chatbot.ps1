@@ -7,7 +7,7 @@ param(
     $resourceGroupName = "GlobantChatbot",
 
     [string]
-    $resourceGroupLocation = "eastus",
+    $resourceGroupLocation = "westus",
 
     [string]
     $deploymentName = "InfoChatBot",
@@ -112,7 +112,7 @@ $headers = @{
     'Content-Type'              = 'application/json'
     'Ocp-Apim-Subscription-Key' = $key
 }
-$body = '{"name": "GlobantQnA","qnaList":[],"urls":[], "files": [{"fileName": "GlobantFAQ.docx","fileUri": "https://github.com/AashiqJ/Chatbot_Assignment/blob/master/GlobantFAQ.docx?raw=true"}]}'
+$body = '{"name": "GlobantQnA","qnaList":[],"urls":[], "files": [{"fileName": "GlobantFAQ.docx","fileUri": "https://github.com/juliananto/Azure/blob/master/ChatBotCreation/GlobantFAQ.docx?raw=true"}]}'
 $createKbResult = Invoke-RestMethod -Uri $uri -Method Post -Headers $headers -Body $body
 
 $createKbResult
