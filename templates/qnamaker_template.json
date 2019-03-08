@@ -1,0 +1,177 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "qna": {
+            "type": "String"
+        },
+        "appName": {
+            "type": "String"
+        },
+        "sku": {
+            "defaultValue": "F0",
+            "type": "String"
+        },
+        "location": {
+            "defaultValue": "westus",
+            "type": "String"
+        },
+        "location2": {
+            "defaultValue": "eastus",
+            "type": "String"
+        },
+        "location3": {
+            "defaultValue": "centralus",
+            "type": "String"
+        },
+        "location4": {
+            "defaultValue": "centralus",
+            "type": "String"
+        },
+        "sku2": {
+            "defaultValue": "free",
+            "type": "String"
+        },
+        "searchHostingMode": {
+            "defaultValue": "Default",
+            "type": "String"
+        }
+    },
+    "variables": {
+        "puredAzureSearchName": "[replace(parameters('appName'), '-', '')]",
+        "normalizedAzureSearchName": "[if(greater(length(variables('puredAzureSearchName')), 40), substring(variables('puredAzureSearchName'), sub(length(variables('puredAzureSearchName')), 40), 40) , variables('puredAzureSearchName'))]",
+        "azureSearchName": "[toLower(concat(variables('normalizedAzureSearchName'), '-as', uniqueString(resourceGroup().id, variables('normalizedAzureSearchName'), parameters('sku2'), parameters('location4'), parameters('searchHostingMode'))))]",
+        "appInsightsName": "[concat(parameters('qna'), '-ai')]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.CognitiveServices/accounts",
+            "sku": {
+                "name": "[parameters('sku')]"
+            },
+            "kind": "QnAMaker",
+            "name": "[parameters('qna')]",
+            "apiVersion": "2017-04-18",
+            "location": "[parameters('location')]",
+            "properties": {
+                "apiProperties": {
+                    "qnaRuntimeEndpoint": "[concat('https://',reference(resourceId('Microsoft.Web/sites', parameters('appName'))).hostNames[0])]"
+                }
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/Sites', parameters('appName'))]",
+                "[resourceId('Microsoft.Search/searchServices/', variables('azureSearchName'))]",
+                "[resourceId('microsoft.insights/components/', variables('appInsightsName'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.Search/searchServices",
+            "sku": {
+                "name": "[parameters('sku2')]"
+            },
+            "name": "[variables('azureSearchName')]",
+            "apiVersion": "2015-08-19",
+            "location": "[parameters('location4')]",
+            "tags": {},
+            "properties": {
+                "replicaCount": 1,
+                "partitionCount": 1,
+                "hostingMode": "[parameters('searchHostingMode')]"
+            }
+        },
+        {
+            "type": "Microsoft.Web/sites",
+            "name": "[parameters('appName')]",
+            "apiVersion": "2016-08-01",
+            "location": "[parameters('location3')]",
+            "tags": {
+                "[concat('hidden-related:', '/subscriptions/', subscription().id,'/resourcegroups/', resourceGroup().name, '/providers/Microsoft.Web/serverfarms/', parameters('qna'))]": "empty"
+            },
+            "properties": {
+                "enabled": true,
+                "siteConfig": {
+                    "cors": {
+                        "allowedOrigins": [
+                            "*"
+                        ]
+                    }
+                },
+                "name": "[parameters('appName')]",
+                "serverFarmId": "[concat('/subscriptions/', subscription().id,'/resourcegroups/', resourceGroup().name, '/providers/Microsoft.Web/serverfarms/', parameters('qna'))]",
+                "hostingEnvironment": ""
+            },
+            "resources": [
+                {
+                    "type": "microsoft.insights/components",
+                    "kind": "web",
+                    "name": "[variables('appInsightsName')]",
+                    "apiVersion": "2015-05-01",
+                    "location": "[parameters('location2')]",
+                    "tags": {
+                        "[concat('hidden-link:', resourceId('Microsoft.Web/sites/', parameters('appName')))]": "Resource"
+                    },
+                    "properties": {
+                        "ApplicationId": "[parameters('appName')]"
+                    },
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Web/sites/', parameters('appName'))]"
+                    ]
+                },
+                {
+                    "type": "config",
+                    "name": "appsettings",
+                    "apiVersion": "2015-08-01",
+                    "properties": {
+                        "AzureSearchName": "[variables('azureSearchName')]",
+                        "AzureSearchAdminKey": "[listAdminKeys(resourceId('Microsoft.Search/searchServices/', variables('azureSearchName')), '2015-08-19').primaryKey]",
+                        "UserAppInsightsKey": "[reference(resourceId('microsoft.insights/components/', variables('appInsightsName')), '2015-05-01').InstrumentationKey]",
+                        "UserAppInsightsName": "[variables('appInsightsName')]",
+                        "UserAppInsightsAppId": "[reference(resourceId('microsoft.insights/components/', variables('appInsightsName')), '2015-05-01').AppId]",
+                        "PrimaryEndpointKey": "[concat(parameters('appName'), '-PrimaryEndpointKey')]",
+                        "SecondaryEndpointKey": "[concat(parameters('appName'), '-SecondaryEndpointKey')]",
+                        "DefaultAnswer": "No good match found in KB.",
+                        "QNAMAKER_EXTENSION_VERSION": "latest"
+                    },
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Web/Sites', parameters('appName'))]",
+                        "[resourceId('Microsoft.Search/searchServices/', variables('azureSearchName'))]"
+                    ]
+                }
+            ],
+            "dependsOn": [
+                "[concat('Microsoft.Web/serverfarms/', parameters('qna'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.Web/serverfarms",
+            "sku": {
+                "Tier": "Standard",
+                "Name": "S1"
+            },
+            "name": "[parameters('qna')]",
+            "apiVersion": "2016-09-01",
+            "location": "[parameters('location3')]",
+            "properties": {
+                "name": "[parameters('qna')]",
+                "workerSizeId": "0",
+                "reserved": false,
+                "numberOfWorkers": "1",
+                "hostingEnvironment": ""
+            }
+        }
+    ],
+    "outputs": {
+        "qnaRuntimeEndpoint": {
+            "type": "String",
+            "value": "[concat('https://',reference(resourceId('Microsoft.Web/sites', parameters('appName'))).hostNames[0])]"
+        },
+        "cognitivekeys": {
+            "type": "object",
+            "value": "[listKeys(concat(resourceGroup().id,'/providers/','Microsoft.CognitiveServices/accounts/', parameters('qna')),'2016-02-01-preview')]"
+        },
+        "cognitivekey1": {
+            "type": "string",
+            "value": "[listKeys(concat(resourceGroup().id,'/providers/','Microsoft.CognitiveServices/accounts/', parameters('qna')),'2016-02-01-preview').key1]"
+        }
+    }
+}

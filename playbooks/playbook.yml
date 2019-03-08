@@ -1,0 +1,129 @@
+---
+  - name: Create Chat bot
+    hosts: localhost
+    connection: local
+    tasks:
+      - name: Create resource group
+        azure_rm_resourcegroup:
+          name: "{{ resource_group }}"
+          location: westus
+        
+      - name: Create QNA Services
+        azure_rm_deployment:
+          state: present
+          resource_group_name: "{{ resource_group }}"
+          parameters:
+            name:
+              value: "{{ qna_maker_name }}"
+            appName:
+              value: "{{ qna_maker_app_name }}"
+          template_link: 'https://raw.githubusercontent.com/AashiqJ/Chatbot_Assignment/master/templates/qnamaker_template.json'
+        register: qnamaker
+
+      - name: Create Knowledgebase
+        uri: 
+          url: https://westus.api.cognitive.microsoft.com/qnamaker/v4.0/knowledgebases/create
+          method: POST          
+          body: '{"name": "{{ qna_name }}","qnaList":[],"urls":[], "files": [{"fileName": "{{ file_name }}","fileUri": "{{ file_location }}"}]}'
+          headers:
+            Content-Type: "application/json"
+            Ocp-Apim-Subscription-Key: "{{ qnamaker.deployment.outputs.cognitivekey1.value }}"
+          return_content: yes
+          body_format: json
+          status_code: 202
+        register: result
+
+      - pause: 
+          seconds: 30
+
+      - name: Get Operation Details
+        uri:
+          url: "{{'https://westus.api.cognitive.microsoft.com/qnamaker/v4.0/operations/' + result.json.operationId }}"
+          method: GET
+          headers:
+            Ocp-Apim-Subscription-Key: "{{ qnamaker.deployment.outputs.cognitivekey1.value }}"
+          return_content: yes
+          status_code: 200
+        register: result2
+        until: result2.json.operationState == "Succeeded"
+        retries: 4
+        delay: 30
+
+      - name: Publish Knowledgebase
+        uri:
+          url: "{{ 'https://westus.api.cognitive.microsoft.com/qnamaker/v4.0' + result2.json.resourceLocation }}"
+          method: POST
+          body: ''
+          headers:
+            Ocp-Apim-Subscription-Key: "{{ qnamaker.deployment.outputs.cognitivekey1.value }}"
+          return_content: yes
+          status_code: 204
+        register: result3
+
+      - name: Get Endpoint Keys
+        uri:
+          url: "https://westus.api.cognitive.microsoft.com/qnamaker/v4.0/endpointkeys"
+          method: GET
+          headers:
+            Ocp-Apim-Subscription-Key: "{{ qnamaker.deployment.outputs.cognitivekey1.value }}"
+          return_content: yes
+          status_code: 200
+        register: result4
+
+      - name: Get Knowledgebase Details
+        uri:
+          url: "{{ 'https://westus.api.cognitive.microsoft.com/qnamaker/v4.0' + result2.json.resourceLocation }}"
+          method: GET
+          headers:
+            Ocp-Apim-Subscription-Key: "{{ qnamaker.deployment.outputs.cognitivekey1.value }}"
+          return_content: yes
+          status_code: 200
+        register: result5
+
+      - name: Chat bot ARM template
+        azure_rm_deployment:
+          state: present
+          resource_group_name: "{{ resource_group }}"
+          parameters:
+            botId:
+              value: "{{ bot_id }}"
+            siteName:
+              value: "{{ site_name }}"
+            storageAccountName:
+              value: "{{ bot_id }}{{ 100 |random(1,2) }}"
+            appId:
+              value: "{{ app_id }}"
+            appSecret:
+              value: "{{ app_secret }}"
+            serverFarmId:
+              value: "{{ bot_app_plan_name }}"
+            QnAKnowledgebaseId:
+              value: "{{ result5.json.id }}"
+            QnAAuthKey:
+              value: "{{ result4.json.primaryEndpointKey }}"
+            QnAEndpointHostName:
+              value: "https://{{ qna_maker_name }}.azurewebsites.net/qnamaker"
+          template_link: 'https://raw.githubusercontent.com/AashiqJ/Chatbot_Assignment/master/templates/bot_template.json'
+        register: chatbot
+
+      - name: Authorization
+        uri:
+          url: https://login.windows.net/{{ lookup('env','AZURE_TENANT') }}/oauth2/token
+          method: POST
+          body: resource=https%3A%2F%2Fmanagement.core.windows.net%2F&client_id={{ lookup('env','AZURE_CLIENT_ID') }}&grant_type=client_credentials&client_secret={{ lookup('env','AZURE_SECRET') }}
+          return_content: yes
+          headers:
+            Content-Type: application/x-www-form-urlencoded
+        register: authresp
+
+      - name: Get Bot Secret Keys
+        uri:
+          url: "https://management.azure.com/subscriptions/{{ lookup('env','AZURE_SUBSCRIPTION_ID') }}/resourceGroups/{{ resource_group }}/providers/Microsoft.BotService/botServices/{{ bot_id }}/channels/WebChatChannel/listChannelWithKeys?api-version=2018-07-12"
+          method: GET
+          headers:
+            Authorization: "Bearer {{ authresp.json.access_token }}"
+          return_content: yes
+        register: secret
+
+      - debug:
+          msg: "<iframe src='https://webchat.botframework.com/embed/{{ bot_id }}?s={{ secret.json.properties.properties.sites[0].key }}'  style='min-width: 400px; width: 400px; min-height: 500px;'></iframe>"
